@@ -104,7 +104,10 @@ def analyze(records, params):
     r2_defined = float(np.std(y[cut:])) > 1e-9
     r2 = float(r2_score(y[cut:], predictions)) if r2_defined else None
     scaler = model.named_steps["standardscaler"]
-    coefficients = model.named_steps["ridge"].coef_ / scaler.scale_
+    ridge = model.named_steps["ridge"]
+    coefficients = ridge.coef_ / scaler.scale_
+    intercept = float(ridge.intercept_ - np.sum(coefficients * scaler.mean_))
+    feature_keys = [list(FEATURES)[index] for index in features]
     baseline = np.mean(x[-14:], axis=0)
     scenario = baseline.copy()
     scenario[0] *= 1 + delta / 100
@@ -125,5 +128,6 @@ def analyze(records, params):
         "table": {"columns": [{"key": "feature", "label": "入选特征"}, {"key": "coefficient", "label": "原始单位系数"}, {"key": "baseline", "label": "近期基准"}, {"key": "scenario", "label": "情景值"}], "rows": rows},
         "chart": {"type": "line", "labels": [str(row[0]) for row in parsed[cut:]], "series": [{"name": "留出期实测", "values": [round(float(value), 3) for value in y[cut:]]}, {"name": "留出期预测", "values": [round(float(value), 3) for value in predictions]}]},
         "findings": [f"选定岭惩罚α={alpha:g}；训练内交叉验证RMSE={cv_rmse:.3f}kWh。", f"最近14天平均特征对应基准日电耗{base_kwh:.2f}kWh，情景差额{scenario_kwh-base_kwh:+.2f}kWh。", "每折的标准化器仅在该折训练部分拟合；最后20%记录未参与变量和α选择。", "系数已还原到原始单位，解释为其他入选变量不变时的条件关联。"],
+        "model": {"features": feature_keys, "coefficients": {key: round(float(coeff), 6) for key, coeff in zip(feature_keys, coefficients)}, "intercept": round(intercept, 6)},
         "method": metadata()["method"], "warnings": warnings,
     }

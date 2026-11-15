@@ -4,7 +4,8 @@
 
 ## 模块与业务流程
 数据接入（JSON/CSV、字段验证、批次指纹）→ 参数化分析（异步 Python worker）→ 结果复核（指标、图形、明细、解释、批准）→ 定时分发（本地收件箱、CSV/JSON、SHA256）；另有业务总览和审计轨迹。
-三个贯穿全栈的实体：Dataset 数据批次、Job 分析任务、Report 分发计划；辅助 User、Audit、Delivery。
+线体监测：批准结果设为监测基线（固定预测依据、可设偏差阈值、按生效日分段换版）→ 持续接入带修订号的日实测 → 按业务日期重演逐日判断 → 异常单自动开具/恢复/撤销（连续三日超出开单、连续两日恢复关闭、缺日不算恢复、跨版不拼连续天数、人工处置留痕）。
+三个贯穿全栈的实体：Dataset 数据批次、Job 分析任务、Report 分发计划；监测域 MonitoringBaseline 基线版本、DailyActual 日实测、DayJudgment 逐日判断、AnomalyTicket 异常单；辅助 User、Audit、Delivery。
 
 ## 快速启动
 ```bash
